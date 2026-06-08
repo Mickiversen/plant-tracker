@@ -120,3 +120,62 @@
   opacity: 0.5;
   cursor: default;
 }
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nameRow .input {
+  flex: 1;
+}
+
+.lookupBadge {
+  font-size: 12px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.suggestionBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.suggestionActions {
+  display: flex;
+  gap: 8px;
+}
+
+.applyBtn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.applyBtn:hover {
+  opacity: 0.85;
+}
+
+.dismissBtn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}

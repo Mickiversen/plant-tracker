@@ -3,15 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAddPlant, useUpdatePlant } from '../hooks/usePlantMutations'
 import { useUpsertCareNeeds } from '../hooks/useCareNeeds'
 import { usePlant } from '../hooks/usePlants'
+import { usePlantLookup } from '../hooks/usePlantLookup'
 import styles from './AddPlant.module.css'
 
 const LIGHT_OPTIONS = ['low', 'medium', 'high', 'direct']
+
+const DEFAULTS = {
+  water_every_days: '7',
+  light_level: 'medium',
+  soil_type: '',
+  fertilize_every_days: '',
+}
 
 export function AddPlant() {
   const { id } = useParams()
   const isEdit = !!id && id !== 'new'
   const navigate = useNavigate()
   const { data: existing } = usePlant(isEdit ? id : null)
+  const { lookup, loading: lookupLoading, suggestion, clear } = usePlantLookup()
 
   const [form, setForm] = useState({
     name: '',
@@ -19,10 +28,7 @@ export function AddPlant() {
     location: '',
     photo_url: '',
     notes: '',
-    water_every_days: '7',
-    light_level: 'medium',
-    soil_type: '',
-    fertilize_every_days: '',
+    ...DEFAULTS,
   })
 
   const [initialised, setInitialised] = useState(false)
@@ -39,6 +45,29 @@ export function AddPlant() {
       soil_type: existing.soil_type ?? '',
       fertilize_every_days: String(existing.fertilize_every_days ?? ''),
     })
+  }
+
+  // Apply AI suggestion — only fill fields still at their default/empty value
+  function applySuggestion() {
+    if (!suggestion) return
+    setForm((f) => ({
+      ...f,
+      species: f.species || suggestion.species || f.species,
+      notes: f.notes || suggestion.notes || f.notes,
+      water_every_days: f.water_every_days === DEFAULTS.water_every_days
+        ? String(suggestion.water_every_days ?? f.water_every_days)
+        : f.water_every_days,
+      light_level: f.light_level === DEFAULTS.light_level
+        ? (suggestion.light_level ?? f.light_level)
+        : f.light_level,
+      soil_type: f.soil_type === DEFAULTS.soil_type
+        ? (suggestion.soil_type ?? f.soil_type)
+        : f.soil_type,
+      fertilize_every_days: f.fertilize_every_days === DEFAULTS.fertilize_every_days
+        ? String(suggestion.fertilize_every_days ?? '')
+        : f.fertilize_every_days,
+    }))
+    clear()
   }
 
   const addPlant = useAddPlant()
@@ -94,14 +123,28 @@ export function AddPlant() {
 
           <label className={styles.label}>
             Name <span className={styles.required}>*</span>
-            <input
-              className={styles.input}
-              value={form.name}
-              onChange={(e) => set('name', e.target.value)}
-              required
-              placeholder="e.g. Monstera"
-            />
+            <div className={styles.nameRow}>
+              <input
+                className={styles.input}
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
+                onBlur={() => !isEdit && lookup(form.name)}
+                required
+                placeholder="e.g. Monstera"
+              />
+              {lookupLoading && <span className={styles.lookupBadge}>✨ Looking up…</span>}
+            </div>
           </label>
+
+          {suggestion && (
+            <div className={styles.suggestionBanner}>
+              <span>✨ Found care info for <strong>{form.name}</strong></span>
+              <div className={styles.suggestionActions}>
+                <button type="button" className={styles.applyBtn} onClick={applySuggestion}>Apply suggestions</button>
+                <button type="button" className={styles.dismissBtn} onClick={clear}>Dismiss</button>
+              </div>
+            </div>
+          )}
 
           <label className={styles.label}>
             Species
