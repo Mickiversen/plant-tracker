@@ -47,25 +47,16 @@ export function AddPlant() {
     })
   }
 
-  // Apply AI suggestion — only fill fields still at their default/empty value
   function applySuggestion() {
     if (!suggestion) return
     setForm((f) => ({
       ...f,
-      species: f.species || suggestion.species || f.species,
-      notes: f.notes || suggestion.notes || f.notes,
-      water_every_days: f.water_every_days === DEFAULTS.water_every_days
-        ? String(suggestion.water_every_days ?? f.water_every_days)
-        : f.water_every_days,
-      light_level: f.light_level === DEFAULTS.light_level
-        ? (suggestion.light_level ?? f.light_level)
-        : f.light_level,
-      soil_type: f.soil_type === DEFAULTS.soil_type
-        ? (suggestion.soil_type ?? f.soil_type)
-        : f.soil_type,
-      fertilize_every_days: f.fertilize_every_days === DEFAULTS.fertilize_every_days
-        ? String(suggestion.fertilize_every_days ?? '')
-        : f.fertilize_every_days,
+      species: suggestion.species ?? f.species,
+      notes: suggestion.notes ?? f.notes,
+      water_every_days: suggestion.water_every_days ? String(suggestion.water_every_days) : f.water_every_days,
+      light_level: suggestion.light_level ?? f.light_level,
+      soil_type: suggestion.soil_type ?? f.soil_type,
+      fertilize_every_days: suggestion.fertilize_every_days ? String(suggestion.fertilize_every_days) : f.fertilize_every_days,
     }))
     clear()
   }
