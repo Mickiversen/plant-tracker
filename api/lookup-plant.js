@@ -48,12 +48,16 @@ Plant name: "${name.replace(/"/g, '')}"`
     }
 
     const json = await response.json()
-    const text = json.content?.[0]?.text ?? ''
+    let text = json.content?.[0]?.text ?? ''
+
+    // Strip markdown code fences if present
+    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
 
     try {
       const data = JSON.parse(text)
       return res.json({ data })
-    } catch {
+    } catch (e) {
+      console.error('JSON parse failed:', text, e.message)
       return res.json({ data: null })
     }
   } catch (err) {

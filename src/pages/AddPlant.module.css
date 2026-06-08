@@ -131,10 +131,27 @@
   flex: 1;
 }
 
-.lookupBadge {
-  font-size: 12px;
+.lookupBtn {
+  padding: 8px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
   color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.lookupBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.suggestionText {
+  font-size: 13px;
+  color: var(--text-h);
 }
 
 .suggestionBanner {

@@ -119,20 +119,31 @@ export function AddPlant() {
                 className={styles.input}
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
-                onBlur={() => !isEdit && lookup(form.name)}
                 required
                 placeholder="e.g. Monstera"
               />
-              {lookupLoading && <span className={styles.lookupBadge}>✨ Looking up…</span>}
+              <button
+                type="button"
+                className={styles.lookupBtn}
+                onClick={() => lookup(form.name)}
+                disabled={lookupLoading || form.name.trim().length < 2}
+              >
+                {lookupLoading ? '…' : '✨ Look up'}
+              </button>
             </div>
           </label>
 
           {suggestion && (
             <div className={styles.suggestionBanner}>
-              <span>✨ Found care info for <strong>{form.name}</strong></span>
+              <div className={styles.suggestionText}>
+                <strong>✨ {suggestion.species || form.name}</strong>
+                {suggestion.water_every_days && <span> · 💧 every {suggestion.water_every_days}d</span>}
+                {suggestion.light_level && <span> · {suggestion.light_level} light</span>}
+                {suggestion.soil_type && <span> · {suggestion.soil_type}</span>}
+              </div>
               <div className={styles.suggestionActions}>
-                <button type="button" className={styles.applyBtn} onClick={applySuggestion}>Apply suggestions</button>
-                <button type="button" className={styles.dismissBtn} onClick={clear}>Dismiss</button>
+                <button type="button" className={styles.applyBtn} onClick={applySuggestion}>Apply</button>
+                <button type="button" className={styles.dismissBtn} onClick={clear}>✕</button>
               </div>
             </div>
           )}
