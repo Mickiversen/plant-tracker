@@ -120,12 +120,8 @@
 }
 
 .overdueTag {
-  background: rgba(249, 115, 22, 0.15);
-  color: #c2410c;
-}
-
-@media (prefers-color-scheme: dark) {
-  .overdueTag { color: #fb923c; }
+  background: rgba(224, 92, 42, 0.18);
+  color: #f4894a;
 }
 
 .details {

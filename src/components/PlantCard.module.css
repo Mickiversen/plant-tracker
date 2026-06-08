@@ -17,8 +17,8 @@
 }
 
 .overdue {
-  border-color: #f97316;
-  background: rgba(249, 115, 22, 0.04);
+  border-color: #e05c2a;
+  background: rgba(224, 92, 42, 0.06);
 }
 
 .photo {
@@ -84,14 +84,8 @@
 }
 
 .overdueTag {
-  background: rgba(249, 115, 22, 0.15);
-  color: #c2410c;
-}
-
-@media (prefers-color-scheme: dark) {
-  .overdueTag {
-    color: #fb923c;
-  }
+  background: rgba(224, 92, 42, 0.18);
+  color: #f4894a;
 }
 
 .footer {
