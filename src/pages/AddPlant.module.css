@@ -154,6 +154,12 @@
   color: var(--text-h);
 }
 
+.lookupError {
+  font-size: 13px;
+  color: #f97316;
+  margin: 0;
+}
+
 .suggestionBanner {
   display: flex;
   align-items: center;

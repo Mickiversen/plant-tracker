@@ -20,7 +20,7 @@ export function AddPlant() {
   const isEdit = !!id && id !== 'new'
   const navigate = useNavigate()
   const { data: existing } = usePlant(isEdit ? id : null)
-  const { lookup, loading: lookupLoading, suggestion, clear } = usePlantLookup()
+  const { lookup, loading: lookupLoading, suggestion, lookupError, clear } = usePlantLookup()
 
   const [form, setForm] = useState({
     name: '',
@@ -132,6 +132,10 @@ export function AddPlant() {
               </button>
             </div>
           </label>
+
+          {lookupError && (
+            <p className={styles.lookupError}>⚠️ {lookupError}</p>
+          )}
 
           {suggestion && (
             <div className={styles.suggestionBanner}>
