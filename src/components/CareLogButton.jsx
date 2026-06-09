@@ -36,7 +36,7 @@ export function CareLogButton({ plantId }) {
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} onClick={(e) => e.stopPropagation()}>
       <button
         className={styles.trigger}
         onClick={(e) => { e.preventDefault(); open ? close() : setOpen(true) }}
