@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAddPlant, useUpdatePlant } from '../hooks/usePlantMutations'
 import { useUpsertCareNeeds } from '../hooks/useCareNeeds'
@@ -41,6 +41,11 @@ export function AddPlant() {
     const url = await upload(file)
     if (url) setForm((f) => ({ ...f, photo_url: url }))
   }, [upload])
+
+  useEffect(() => {
+    document.addEventListener('paste', handlePaste)
+    return () => document.removeEventListener('paste', handlePaste)
+  }, [handlePaste])
 
   const [form, setForm] = useState({
     name: '',
