@@ -50,7 +50,7 @@ export function CareLogButton({ plantId }) {
         <div className={styles.menu}>
           {!pending ? (
             ACTIONS.map((a) => (
-              <button key={a.value} className={styles.item} onClick={() => selectAction(a)}>
+              <button key={a.value} className={styles.item} onClick={(e) => { e.preventDefault(); selectAction(a) }}>
                 {a.label}
               </button>
             ))
