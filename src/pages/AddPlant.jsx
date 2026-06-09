@@ -15,6 +15,11 @@ const DEFAULTS = {
   fertilize_every_days: '',
   light_ppfd: '',
   light_dli: '',
+  humidity_min: '',
+  humidity_max: '',
+  temp_min: '',
+  temp_max: '',
+  repot_every_days: '',
 }
 
 export function AddPlant() {
@@ -48,6 +53,11 @@ export function AddPlant() {
       fertilize_every_days: String(existing.fertilize_every_days ?? ''),
       light_ppfd: existing.light_ppfd ?? '',
       light_dli: existing.light_dli ?? '',
+      humidity_min: String(existing.humidity_min ?? ''),
+      humidity_max: String(existing.humidity_max ?? ''),
+      temp_min: String(existing.temp_min ?? ''),
+      temp_max: String(existing.temp_max ?? ''),
+      repot_every_days: String(existing.repot_every_days ?? ''),
     })
   }
 
@@ -63,6 +73,11 @@ export function AddPlant() {
       fertilize_every_days: suggestion.fertilize_every_days ? String(suggestion.fertilize_every_days) : f.fertilize_every_days,
       light_ppfd: suggestion.light_ppfd ?? f.light_ppfd,
       light_dli: suggestion.light_dli ?? f.light_dli,
+      humidity_min: suggestion.humidity_min != null ? String(suggestion.humidity_min) : f.humidity_min,
+      humidity_max: suggestion.humidity_max != null ? String(suggestion.humidity_max) : f.humidity_max,
+      temp_min: suggestion.temp_min != null ? String(suggestion.temp_min) : f.temp_min,
+      temp_max: suggestion.temp_max != null ? String(suggestion.temp_max) : f.temp_max,
+      repot_every_days: suggestion.repot_every_days ? String(suggestion.repot_every_days) : f.repot_every_days,
     }))
     clear()
   }
@@ -104,6 +119,11 @@ export function AddPlant() {
       fertilizeEveryDays: form.fertilize_every_days ? parseInt(form.fertilize_every_days, 10) : null,
       lightPpfd: form.light_ppfd.trim() || null,
       lightDli: form.light_dli.trim() || null,
+      humidityMin: form.humidity_min ? parseInt(form.humidity_min, 10) : null,
+      humidityMax: form.humidity_max ? parseInt(form.humidity_max, 10) : null,
+      tempMin: form.temp_min ? parseInt(form.temp_min, 10) : null,
+      tempMax: form.temp_max ? parseInt(form.temp_max, 10) : null,
+      repotEveryDays: form.repot_every_days ? parseInt(form.repot_every_days, 10) : null,
     })
 
     navigate(isEdit ? `/plants/${plantId}` : '/')
@@ -154,6 +174,9 @@ export function AddPlant() {
                 {suggestion.light_level && <span> · {suggestion.light_level} light</span>}
                 {suggestion.light_ppfd && <span> · ☀️ {suggestion.light_ppfd}</span>}
                 {suggestion.light_dli && <span> · DLI {suggestion.light_dli}</span>}
+                {(suggestion.humidity_min != null && suggestion.humidity_max != null) && <span> · 💧 {suggestion.humidity_min}–{suggestion.humidity_max}% humidity</span>}
+                {(suggestion.temp_min != null && suggestion.temp_max != null) && <span> · 🌡 {suggestion.temp_min}–{suggestion.temp_max}°C</span>}
+                {suggestion.repot_every_days && <span> · 🪴 repot every {Math.round(suggestion.repot_every_days / 30)}mo</span>}
                 {suggestion.soil_type && <span> · {suggestion.soil_type}</span>}
               </div>
               <div className={styles.suggestionActions}>
@@ -272,6 +295,68 @@ export function AddPlant() {
               value={form.fertilize_every_days}
               onChange={(e) => set('fertilize_every_days', e.target.value)}
               placeholder="Optional"
+            />
+          </label>
+
+          <div className={styles.row}>
+            <label className={styles.label}>
+              Humidity min (%)
+              <input
+                className={styles.input}
+                type="number"
+                min="0"
+                max="100"
+                value={form.humidity_min}
+                onChange={(e) => set('humidity_min', e.target.value)}
+                placeholder="e.g. 40"
+              />
+            </label>
+            <label className={styles.label}>
+              Humidity max (%)
+              <input
+                className={styles.input}
+                type="number"
+                min="0"
+                max="100"
+                value={form.humidity_max}
+                onChange={(e) => set('humidity_max', e.target.value)}
+                placeholder="e.g. 70"
+              />
+            </label>
+          </div>
+
+          <div className={styles.row}>
+            <label className={styles.label}>
+              Temp min (°C)
+              <input
+                className={styles.input}
+                type="number"
+                value={form.temp_min}
+                onChange={(e) => set('temp_min', e.target.value)}
+                placeholder="e.g. 15"
+              />
+            </label>
+            <label className={styles.label}>
+              Temp max (°C)
+              <input
+                className={styles.input}
+                type="number"
+                value={form.temp_max}
+                onChange={(e) => set('temp_max', e.target.value)}
+                placeholder="e.g. 30"
+              />
+            </label>
+          </div>
+
+          <label className={styles.label}>
+            Repot every (days)
+            <input
+              className={styles.input}
+              type="number"
+              min="1"
+              value={form.repot_every_days}
+              onChange={(e) => set('repot_every_days', e.target.value)}
+              placeholder="e.g. 548 (~18 months)"
             />
           </label>
         </section>

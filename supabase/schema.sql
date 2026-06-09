@@ -23,7 +23,12 @@ create table care_needs (
   soil_type text,
   fertilize_every_days int,
   light_ppfd text,
-  light_dli text
+  light_dli text,
+  humidity_min int,
+  humidity_max int,
+  temp_min int,
+  temp_max int,
+  repot_every_days int
 );
 
 -- Care log (event log)
@@ -48,8 +53,14 @@ select
   cn.fertilize_every_days,
   cn.light_ppfd,
   cn.light_dli,
-  max(cl.logged_at) filter (where cl.action = 'watered') as last_watered_at,
-  max(cl.logged_at) filter (where cl.action = 'fertilized') as last_fertilized_at
+  cn.humidity_min,
+  cn.humidity_max,
+  cn.temp_min,
+  cn.temp_max,
+  cn.repot_every_days,
+  max(cl.logged_at) filter (where cl.action = 'watered')    as last_watered_at,
+  max(cl.logged_at) filter (where cl.action = 'fertilized') as last_fertilized_at,
+  max(cl.logged_at) filter (where cl.action = 'repotted')   as last_repotted_at
 from plants p
 left join care_needs cn on cn.plant_id = p.id
 left join care_log cl on cl.plant_id = p.id

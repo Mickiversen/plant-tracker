@@ -131,6 +131,12 @@
   flex: 1;
 }
 
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .lookupBtn {
   padding: 8px 14px;
   border-radius: 7px;

@@ -27,10 +27,10 @@ function formatDate(iso) {
   })
 }
 
-function daysUntilWater(lastWateredAt, waterEveryDays) {
-  if (!waterEveryDays) return null
-  if (!lastWateredAt) return 0
-  const next = new Date(lastWateredAt).getTime() + waterEveryDays * 86400000
+function daysUntil(lastAt, everyDays) {
+  if (!everyDays) return null
+  if (!lastAt) return 0
+  const next = new Date(lastAt).getTime() + everyDays * 86400000
   return Math.ceil((next - Date.now()) / 86400000)
 }
 
@@ -45,8 +45,9 @@ export function PlantDetail() {
   if (error) return <p className={styles.state}>Error: {error.message}</p>
   if (!plant) return <p className={styles.state}>Plant not found.</p>
 
-  const days = daysUntilWater(plant.last_watered_at, plant.water_every_days)
-  const overdue = days !== null && days <= 0
+  const days = daysUntil(plant.last_watered_at, plant.water_every_days)
+  const repotDays = daysUntil(plant.last_repotted_at, plant.repot_every_days)
+  const overdue = (days !== null && days <= 0) || (repotDays !== null && repotDays <= 0)
 
   async function handleDelete() {
     if (!confirm(`Delete "${plant.name}"? This cannot be undone.`)) return
@@ -79,10 +80,17 @@ export function PlantDetail() {
             {plant.location && <span className={styles.tag}>📍 {plant.location}</span>}
             {plant.light_level && <span className={styles.tag}>{LIGHT_LABELS[plant.light_level]}</span>}
             {days !== null && (
-              <span className={`${styles.tag} ${overdue ? styles.overdueTag : ''}`}>
-                {overdue
+              <span className={`${styles.tag} ${days <= 0 ? styles.overdueTag : ''}`}>
+                {days <= 0
                   ? `💧 Overdue by ${Math.abs(days)}d`
                   : days === 0 ? '💧 Water today' : `💧 In ${days}d`}
+              </span>
+            )}
+            {repotDays !== null && (
+              <span className={`${styles.tag} ${repotDays <= 0 ? styles.overdueTag : ''}`}>
+                {repotDays <= 0
+                  ? `🪴 Repot overdue by ${Math.abs(repotDays)}d`
+                  : repotDays === 0 ? '🪴 Repot today' : `🪴 Repot in ${repotDays}d`}
               </span>
             )}
           </div>
@@ -92,32 +100,23 @@ export function PlantDetail() {
       </div>
 
       <div className={styles.details}>
-        {(plant.water_every_days || plant.soil_type || plant.fertilize_every_days || plant.light_ppfd || plant.light_dli) && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Care needs</h2>
-            <dl className={styles.dl}>
-              {plant.water_every_days && (
-                <><dt>Water every</dt><dd>{plant.water_every_days} days</dd></>
-              )}
-              {plant.light_ppfd && (
-                <><dt>Light (PPFD)</dt><dd>{plant.light_ppfd}</dd></>
-              )}
-              {plant.light_dli && (
-                <><dt>Light (DLI)</dt><dd>{plant.light_dli}</dd></>
-              )}
-              {plant.soil_type && (
-                <><dt>Soil</dt><dd>{plant.soil_type}</dd></>
-              )}
-              {plant.fertilize_every_days && (
-                <><dt>Fertilize every</dt><dd>{plant.fertilize_every_days} days</dd></>
-              )}
-              <><dt>Last watered</dt><dd>{formatDate(plant.last_watered_at)}</dd></>
-              {plant.fertilize_every_days && (
-                <><dt>Last fertilized</dt><dd>{formatDate(plant.last_fertilized_at)}</dd></>
-              )}
-            </dl>
-          </section>
-        )}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Care needs</h2>
+          <dl className={styles.dl}>
+            {plant.water_every_days && <><dt>Water every</dt><dd>{plant.water_every_days} days</dd></>}
+            {plant.fertilize_every_days && <><dt>Fertilize every</dt><dd>{plant.fertilize_every_days} days</dd></>}
+            {plant.repot_every_days && <><dt>Repot every</dt><dd>{Math.round(plant.repot_every_days / 30)} months ({plant.repot_every_days} days)</dd></>}
+            {(plant.humidity_min != null && plant.humidity_max != null) && <><dt>Humidity</dt><dd>{plant.humidity_min}–{plant.humidity_max}%</dd></>}
+            {(plant.temp_min != null && plant.temp_max != null) && <><dt>Temperature</dt><dd>{plant.temp_min}–{plant.temp_max}°C</dd></>}
+            {plant.light_level && <><dt>Light level</dt><dd>{plant.light_level}</dd></>}
+            {plant.light_ppfd && <><dt>Light (PPFD)</dt><dd>{plant.light_ppfd}</dd></>}
+            {plant.light_dli && <><dt>Light (DLI)</dt><dd>{plant.light_dli}</dd></>}
+            {plant.soil_type && <><dt>Soil</dt><dd>{plant.soil_type}</dd></>}
+            <><dt>Last watered</dt><dd>{formatDate(plant.last_watered_at)}</dd></>
+            {plant.fertilize_every_days && <><dt>Last fertilized</dt><dd>{formatDate(plant.last_fertilized_at)}</dd></>}
+            {plant.repot_every_days && <><dt>Last repotted</dt><dd>{formatDate(plant.last_repotted_at)}</dd></>}
+          </dl>
+        </section>
 
         {plant.notes && (
           <section className={styles.section}>

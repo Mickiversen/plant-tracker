@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 export function useUpsertCareNeeds() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ plantId, waterEveryDays, lightLevel, soilType, fertilizeEveryDays, lightPpfd, lightDli }) => {
+    mutationFn: async ({ plantId, waterEveryDays, lightLevel, soilType, fertilizeEveryDays, lightPpfd, lightDli, humidityMin, humidityMax, tempMin, tempMax, repotEveryDays }) => {
       const { error } = await supabase
         .from('care_needs')
         .upsert({
@@ -15,6 +15,11 @@ export function useUpsertCareNeeds() {
           fertilize_every_days: fertilizeEveryDays || null,
           light_ppfd: lightPpfd || null,
           light_dli: lightDli || null,
+          humidity_min: humidityMin || null,
+          humidity_max: humidityMax || null,
+          temp_min: tempMin || null,
+          temp_max: tempMax || null,
+          repot_every_days: repotEveryDays || null,
         })
       if (error) throw error
     },
