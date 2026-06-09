@@ -1,5 +1,21 @@
 import Anthropic from '@anthropic-ai/sdk'
 
+// Fetch a representative photo from Wikipedia (free, no API key)
+async function fetchPlantPhoto(title) {
+  if (!title) return null
+  try {
+    const res = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!res.ok) return null
+    const json = await res.json()
+    return json.originalimage?.source || json.thumbnail?.source || null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req, res) {
   const name = req.query?.name?.trim()
 
@@ -47,12 +63,20 @@ Plant name: "${name.replace(/"/g, '')}"`
     let text = message.content?.[0]?.text ?? ''
     text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
 
+    let data
     try {
-      const data = JSON.parse(text)
-      return res.json({ data })
+      data = JSON.parse(text)
     } catch {
       return res.json({ data: null, error: 'parse_failed', raw: text })
     }
+
+    // Attach a photo — try the scientific species first, fall back to the typed name
+    if (data) {
+      data.photo_url =
+        (await fetchPlantPhoto(data.species)) || (await fetchPlantPhoto(name)) || null
+    }
+
+    return res.json({ data })
   } catch (err) {
     return res.status(500).json({ data: null, error: err.message })
   }

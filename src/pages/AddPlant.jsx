@@ -66,6 +66,7 @@ export function AddPlant() {
     setForm((f) => ({
       ...f,
       species: suggestion.species ?? f.species,
+      photo_url: f.photo_url || suggestion.photo_url || f.photo_url,
       notes: suggestion.notes ?? f.notes,
       water_every_days: suggestion.water_every_days ? String(suggestion.water_every_days) : f.water_every_days,
       light_level: suggestion.light_level ?? f.light_level,
@@ -167,6 +168,9 @@ export function AddPlant() {
 
           {suggestion && (
             <div className={styles.suggestionBanner}>
+              {suggestion.photo_url && (
+                <img src={suggestion.photo_url} alt="" className={styles.suggestionThumb} />
+              )}
               <div className={styles.suggestionText}>
                 <strong>✨ {suggestion.species || form.name}</strong>
                 {suggestion.water_every_days && <span> · 💧 every {suggestion.water_every_days}d</span>}
@@ -207,7 +211,7 @@ export function AddPlant() {
           </label>
 
           <label className={styles.label}>
-            Photo URL
+            Photo URL <span className={styles.hint}>— auto-filled from lookup, change anytime</span>
             <input
               className={styles.input}
               type="url"
