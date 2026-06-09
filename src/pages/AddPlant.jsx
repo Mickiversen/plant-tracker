@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAddPlant, useUpdatePlant } from '../hooks/usePlantMutations'
 import { useUpsertCareNeeds } from '../hooks/useCareNeeds'
 import { usePlant } from '../hooks/usePlants'
 import { usePlantLookup } from '../hooks/usePlantLookup'
+import { useUploadPhoto } from '../hooks/useUploadPhoto'
 import styles from './AddPlant.module.css'
 
 const LIGHT_OPTIONS = ['low', 'medium', 'high', 'direct']
@@ -28,6 +29,18 @@ export function AddPlant() {
   const navigate = useNavigate()
   const { data: existing } = usePlant(isEdit ? id : null)
   const { lookup, loading: lookupLoading, suggestion, lookupError, clear } = usePlantLookup()
+  const { upload, uploading, uploadError } = useUploadPhoto()
+
+  const handlePaste = useCallback(async (e) => {
+    const items = Array.from(e.clipboardData?.items ?? [])
+    const imageItem = items.find((item) => item.type.startsWith('image/'))
+    if (!imageItem) return
+    e.preventDefault()
+    const file = imageItem.getAsFile()
+    if (!file) return
+    const url = await upload(file)
+    if (url) setForm((f) => ({ ...f, photo_url: url }))
+  }, [upload])
 
   const [form, setForm] = useState({
     name: '',
@@ -211,13 +224,25 @@ export function AddPlant() {
           </label>
 
           <label className={styles.label}>
-            Photo URL <span className={styles.hint}>— auto-filled from lookup, change anytime</span>
+            Photo <span className={styles.hint}>— paste a screenshot (Ctrl+V) or enter a URL</span>
+            <div
+              className={`${styles.pasteZone} ${uploading ? styles.pasteZoneUploading : ''}`}
+              onPaste={handlePaste}
+              tabIndex={0}
+              aria-label="Paste image here"
+            >
+              {form.photo_url
+                ? <img src={form.photo_url} alt="Plant preview" className={styles.photoPreview} />
+                : <span className={styles.pasteHint}>{uploading ? 'Uploading…' : 'Ctrl+V to paste a photo'}</span>
+              }
+            </div>
+            {uploadError && <p className={styles.lookupError}>Upload failed: {uploadError}</p>}
             <input
               className={styles.input}
               type="url"
               value={form.photo_url}
               onChange={(e) => set('photo_url', e.target.value)}
-              placeholder="https://…"
+              placeholder="https://… (or paste above)"
             />
           </label>
 
