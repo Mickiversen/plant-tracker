@@ -3,6 +3,7 @@ import { usePlant } from '../hooks/usePlants'
 import { useCareLogForPlant } from '../hooks/useCareLog'
 import { useDeletePlant } from '../hooks/usePlantMutations'
 import { CareLogButton } from '../components/CareLogButton'
+import { daysUntil } from '../lib/care'
 import styles from './PlantDetail.module.css'
 
 const LIGHT_LABELS = {
@@ -25,13 +26,6 @@ function formatDate(iso) {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
-}
-
-function daysUntil(lastAt, everyDays) {
-  if (!everyDays) return null
-  if (!lastAt) return 0
-  const next = new Date(lastAt).getTime() + everyDays * 86400000
-  return Math.ceil((next - Date.now()) / 86400000)
 }
 
 export function PlantDetail() {

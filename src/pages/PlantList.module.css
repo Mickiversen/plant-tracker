@@ -1,38 +1,83 @@
 .page {
-  padding: 32px 24px;
+  padding: 0 24px 48px;
   text-align: left;
+  background:
+    radial-gradient(ellipse 60% 30% at 10% 0%, rgba(45, 138, 78, 0.10), transparent 70%),
+    radial-gradient(ellipse 50% 35% at 95% 100%, rgba(45, 138, 78, 0.06), transparent 70%);
+  min-height: 100svh;
+  box-sizing: border-box;
 }
 
-.header {
+.hero {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 24px;
+  gap: 16px;
+  padding: 48px 8px 28px;
+  overflow: hidden;
+  background: radial-gradient(ellipse 70% 120% at 50% -40%, rgba(45, 138, 78, 0.18), transparent 75%);
+}
+
+.heroLeaf {
+  position: absolute;
+  right: -20px;
+  top: -30px;
+  width: 220px;
+  height: 220px;
+  color: var(--accent);
+  opacity: 0.18;
+  transform: rotate(18deg);
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 40px;
   font-weight: 600;
   margin: 0;
   color: var(--text-h);
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
+  text-shadow: 0 0 30px rgba(45, 138, 78, 0.35);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text);
+  margin: 0;
+}
+
+.divider {
+  height: 1px;
+  margin-bottom: 28px;
+  background: linear-gradient(90deg, transparent, var(--accent-border), transparent);
 }
 
 .addButton {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 8px 18px;
+  padding: 9px 20px;
   border-radius: 8px;
   background: var(--accent);
   color: #fff;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: opacity 0.15s;
+  box-shadow: 0 0 18px rgba(45, 138, 78, 0.45);
+  transition: opacity 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
 }
 
 .addButton:hover {
-  opacity: 0.85;
+  opacity: 0.9;
+  box-shadow: 0 0 26px rgba(45, 138, 78, 0.65);
 }
 
 .grid {
@@ -50,9 +95,53 @@
 }
 
 .empty {
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 60px 20px;
   color: var(--text);
+}
+
+.emptyLeaf {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 260px;
+  height: 260px;
+  color: var(--accent);
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.emptyTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+}
+
+.emptyText {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 32px;
+  }
+
+  .title {
+    font-size: 30px;
+  }
+
+  .heroLeaf {
+    width: 150px;
+    height: 150px;
+    top: -10px;
+  }
 }
