@@ -92,12 +92,18 @@ export function PlantDetail() {
       </div>
 
       <div className={styles.details}>
-        {(plant.water_every_days || plant.soil_type || plant.fertilize_every_days) && (
+        {(plant.water_every_days || plant.soil_type || plant.fertilize_every_days || plant.light_ppfd || plant.light_dli) && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Care needs</h2>
             <dl className={styles.dl}>
               {plant.water_every_days && (
                 <><dt>Water every</dt><dd>{plant.water_every_days} days</dd></>
+              )}
+              {plant.light_ppfd && (
+                <><dt>Light (PPFD)</dt><dd>{plant.light_ppfd}</dd></>
+              )}
+              {plant.light_dli && (
+                <><dt>Light (DLI)</dt><dd>{plant.light_dli}</dd></>
               )}
               {plant.soil_type && (
                 <><dt>Soil</dt><dd>{plant.soil_type}</dd></>

@@ -13,6 +13,8 @@ const DEFAULTS = {
   light_level: 'medium',
   soil_type: '',
   fertilize_every_days: '',
+  light_ppfd: '',
+  light_dli: '',
 }
 
 export function AddPlant() {
@@ -44,6 +46,8 @@ export function AddPlant() {
       light_level: existing.light_level ?? 'medium',
       soil_type: existing.soil_type ?? '',
       fertilize_every_days: String(existing.fertilize_every_days ?? ''),
+      light_ppfd: existing.light_ppfd ?? '',
+      light_dli: existing.light_dli ?? '',
     })
   }
 
@@ -57,6 +61,8 @@ export function AddPlant() {
       light_level: suggestion.light_level ?? f.light_level,
       soil_type: suggestion.soil_type ?? f.soil_type,
       fertilize_every_days: suggestion.fertilize_every_days ? String(suggestion.fertilize_every_days) : f.fertilize_every_days,
+      light_ppfd: suggestion.light_ppfd ?? f.light_ppfd,
+      light_dli: suggestion.light_dli ?? f.light_dli,
     }))
     clear()
   }
@@ -96,6 +102,8 @@ export function AddPlant() {
       lightLevel: form.light_level,
       soilType: form.soil_type.trim() || null,
       fertilizeEveryDays: form.fertilize_every_days ? parseInt(form.fertilize_every_days, 10) : null,
+      lightPpfd: form.light_ppfd.trim() || null,
+      lightDli: form.light_dli.trim() || null,
     })
 
     navigate(isEdit ? `/plants/${plantId}` : '/')
@@ -142,7 +150,10 @@ export function AddPlant() {
               <div className={styles.suggestionText}>
                 <strong>✨ {suggestion.species || form.name}</strong>
                 {suggestion.water_every_days && <span> · 💧 every {suggestion.water_every_days}d</span>}
+                {suggestion.fertilize_every_days && <span> · 🌱 fertilize every {suggestion.fertilize_every_days}d</span>}
                 {suggestion.light_level && <span> · {suggestion.light_level} light</span>}
+                {suggestion.light_ppfd && <span> · ☀️ {suggestion.light_ppfd}</span>}
+                {suggestion.light_dli && <span> · DLI {suggestion.light_dli}</span>}
                 {suggestion.soil_type && <span> · {suggestion.soil_type}</span>}
               </div>
               <div className={styles.suggestionActions}>
@@ -220,6 +231,26 @@ export function AddPlant() {
                 <option key={o} value={o}>{o.charAt(0).toUpperCase() + o.slice(1)}</option>
               ))}
             </select>
+          </label>
+
+          <label className={styles.label}>
+            Light energy — PPFD
+            <input
+              className={styles.input}
+              value={form.light_ppfd}
+              onChange={(e) => set('light_ppfd', e.target.value)}
+              placeholder="e.g. 100-300 µmol/m²/s"
+            />
+          </label>
+
+          <label className={styles.label}>
+            Light energy — DLI
+            <input
+              className={styles.input}
+              value={form.light_dli}
+              onChange={(e) => set('light_dli', e.target.value)}
+              placeholder="e.g. 4-6 mol/m²/day"
+            />
           </label>
 
           <label className={styles.label}>

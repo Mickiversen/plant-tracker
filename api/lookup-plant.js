@@ -9,32 +9,22 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    // Diagnostic: report which env var names are visible at runtime (names only, no values)
-    const visibleKeys = Object.keys(process.env).filter(
-      (k) => !/SECRET|TOKEN|PASSWORD|PRIVATE/i.test(k)
-    )
-    return res.status(500).json({
-      data: null,
-      error: 'Missing ANTHROPIC_API_KEY',
-      debug: {
-        hasKey: 'ANTHROPIC_API_KEY' in process.env,
-        anthropicKeys: visibleKeys.filter((k) => /ANTHROPIC/i.test(k)),
-        envKeyCount: Object.keys(process.env).length,
-      },
-    })
+    return res.status(500).json({ data: null, error: 'Missing ANTHROPIC_API_KEY' })
   }
 
   const client = new Anthropic({ apiKey })
 
   const prompt = `You are a plant care expert. Given a plant name, return care data as a JSON object.
 
-Fields to return:
-- species: scientific name string (or null if unknown)
+Fields to return (always provide a best-estimate value for every field — only use null if truly not applicable):
+- species: scientific name string
 - water_every_days: integer (how often to water in days)
 - light_level: one of "low", "medium", "high", "direct"
 - soil_type: short string describing ideal soil
-- fertilize_every_days: integer or null
-- notes: one short sentence of care advice or null
+- fertilize_every_days: integer — typical fertilizing cadence in days during the growing season (e.g. 14, 30). Always provide a realistic number for a healthy houseplant; do not return null unless the plant genuinely should never be fertilized.
+- light_ppfd: recommended photosynthetic photon flux density as a short range string with units, e.g. "100-300 µmol/m²/s"
+- light_dli: recommended daily light integral as a short range string with units, e.g. "4-6 mol/m²/day"
+- notes: one short sentence of care advice
 
 If the plant is not a real or recognisable plant, return the JSON value null (not an object).
 
@@ -45,7 +35,7 @@ Plant name: "${name.replace(/"/g, '')}"`
   try {
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 256,
+      max_tokens: 400,
       messages: [{ role: 'user', content: prompt }],
     })
 

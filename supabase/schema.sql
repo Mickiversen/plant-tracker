@@ -21,7 +21,9 @@ create table care_needs (
   water_every_days int not null default 7,
   light_level light_level not null default 'medium',
   soil_type text,
-  fertilize_every_days int
+  fertilize_every_days int,
+  light_ppfd text,
+  light_dli text
 );
 
 -- Care log (event log)
@@ -44,6 +46,8 @@ select
   cn.light_level,
   cn.soil_type,
   cn.fertilize_every_days,
+  cn.light_ppfd,
+  cn.light_dli,
   max(cl.logged_at) filter (where cl.action = 'watered') as last_watered_at,
   max(cl.logged_at) filter (where cl.action = 'fertilized') as last_fertilized_at
 from plants p
