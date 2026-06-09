@@ -32,15 +32,30 @@
 
 body {
   margin: 0;
+  padding: 24px 16px;
+  box-sizing: border-box;
 }
 
 #root {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  min-height: calc(100svh - 48px);
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 12px 8px;
+  }
+
+  #root {
+    border-radius: 14px;
+    min-height: calc(100svh - 24px);
+  }
 }
 
 h1,
