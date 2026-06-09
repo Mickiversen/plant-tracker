@@ -14,7 +14,7 @@ export function usePlantLookup() {
       const res = await fetch(`/api/lookup-plant?name=${encodeURIComponent(name.trim())}`)
       const json = await res.json()
       if (json.error) {
-        setLookupError(json.error)
+        setLookupError(json.debug ? `${json.error} — ${JSON.stringify(json.debug)}` : json.error)
       } else if (json.data) {
         setSuggestion(json.data)
       } else {

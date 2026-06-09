@@ -9,7 +9,19 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return res.status(500).json({ data: null, error: 'Missing ANTHROPIC_API_KEY' })
+    // Diagnostic: report which env var names are visible at runtime (names only, no values)
+    const visibleKeys = Object.keys(process.env).filter(
+      (k) => !/SECRET|TOKEN|PASSWORD|PRIVATE/i.test(k)
+    )
+    return res.status(500).json({
+      data: null,
+      error: 'Missing ANTHROPIC_API_KEY',
+      debug: {
+        hasKey: 'ANTHROPIC_API_KEY' in process.env,
+        anthropicKeys: visibleKeys.filter((k) => /ANTHROPIC/i.test(k)),
+        envKeyCount: Object.keys(process.env).length,
+      },
+    })
   }
 
   const client = new Anthropic({ apiKey })
