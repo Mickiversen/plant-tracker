@@ -5,7 +5,7 @@ import styles from './CareLogButton.module.css'
 const ACTIONS = [
   { value: 'watered', label: '💧 Watered' },
   { value: 'fertilized', label: '🌱 Fertilized' },
-  { value: 'repotted', label: '🪴 Repotted' },
+  { value: 'repotted', label: '🔄 Repotted' },
   { value: 'other', label: '✏️ Other' },
 ]
 

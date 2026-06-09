@@ -176,7 +176,7 @@ export function AddPlant() {
                 {suggestion.light_dli && <span> · DLI {suggestion.light_dli}</span>}
                 {(suggestion.humidity_min != null && suggestion.humidity_max != null) && <span> · 💧 {suggestion.humidity_min}–{suggestion.humidity_max}% humidity</span>}
                 {(suggestion.temp_min != null && suggestion.temp_max != null) && <span> · 🌡 {suggestion.temp_min}–{suggestion.temp_max}°C</span>}
-                {suggestion.repot_every_days && <span> · 🪴 repot every {Math.round(suggestion.repot_every_days / 30)}mo</span>}
+                {suggestion.repot_every_days && <span> · 🔄 repot every {Math.round(suggestion.repot_every_days / 30)}mo</span>}
                 {suggestion.soil_type && <span> · {suggestion.soil_type}</span>}
               </div>
               <div className={styles.suggestionActions}>

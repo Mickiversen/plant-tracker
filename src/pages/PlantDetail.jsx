@@ -15,7 +15,7 @@ const LIGHT_LABELS = {
 const ACTION_LABELS = {
   watered: '💧 Watered',
   fertilized: '🌱 Fertilized',
-  repotted: '🪴 Repotted',
+  repotted: '🔄 Repotted',
   other: '✏️ Other',
 }
 
@@ -70,7 +70,7 @@ export function PlantDetail() {
       <div className={styles.hero}>
         {plant.photo_url
           ? <img src={plant.photo_url} alt={plant.name} className={styles.photo} />
-          : <div className={styles.photoPlaceholder}>🪴</div>
+          : <div className={styles.photoPlaceholder}>🌿</div>
         }
         <div className={styles.heroInfo}>
           <h1 className={styles.name}>{plant.name}</h1>
@@ -89,8 +89,8 @@ export function PlantDetail() {
             {repotDays !== null && (
               <span className={`${styles.tag} ${repotDays <= 0 ? styles.overdueTag : ''}`}>
                 {repotDays <= 0
-                  ? `🪴 Repot overdue by ${Math.abs(repotDays)}d`
-                  : repotDays === 0 ? '🪴 Repot today' : `🪴 Repot in ${repotDays}d`}
+                  ? `🔄 Repot overdue by ${Math.abs(repotDays)}d`
+                  : repotDays === 0 ? '🔄 Repot today' : `🔄 Repot in ${repotDays}d`}
               </span>
             )}
           </div>

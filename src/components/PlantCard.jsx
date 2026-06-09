@@ -28,7 +28,7 @@ export function PlantCard({ plant }) {
       {plant.photo_url && (
         <img src={plant.photo_url} alt={plant.name} className={styles.photo} />
       )}
-      {!plant.photo_url && <div className={styles.photoPlaceholder}>🪴</div>}
+      {!plant.photo_url && <div className={styles.photoPlaceholder}>🌿</div>}
 
       <div className={styles.body}>
         <div className={styles.header}>
@@ -56,12 +56,12 @@ export function PlantCard({ plant }) {
           {repotDays !== null && (
             <span className={`${styles.tag} ${repotOverdue ? styles.overdueTag : ''}`}>
               {repotOverdue
-                ? `🪴 Repot overdue by ${Math.abs(repotDays)}d`
-                : repotDays === 0 ? '🪴 Repot today' : `🪴 Repot in ${repotDays}d`}
+                ? `🔄 Repot overdue by ${Math.abs(repotDays)}d`
+                : repotDays === 0 ? '🔄 Repot today' : `🔄 Repot in ${repotDays}d`}
             </span>
           )}
           {repotDays === null && plant.repot_every_days && (
-            <span className={`${styles.tag} ${styles.overdueTag}`}>🪴 Never repotted</span>
+            <span className={`${styles.tag} ${styles.overdueTag}`}>🔄 Never repotted</span>
           )}
         </div>
 
