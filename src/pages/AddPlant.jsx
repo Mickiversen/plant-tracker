@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAddPlant, useUpdatePlant } from '../hooks/usePlantMutations'
 import { useUpsertCareNeeds } from '../hooks/useCareNeeds'
@@ -30,6 +30,15 @@ export function AddPlant() {
   const { data: existing } = usePlant(isEdit ? id : null)
   const { lookup, loading: lookupLoading, suggestion, lookupError, clear } = usePlantLookup()
   const { upload, uploading, uploadError } = useUploadPhoto()
+  const fileInputRef = useRef(null)
+
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const url = await upload(file)
+    if (url) setForm((f) => ({ ...f, photo_url: url }))
+    e.target.value = ''
+  }
 
   const handlePaste = useCallback(async (e) => {
     const items = Array.from(e.clipboardData?.items ?? [])
@@ -229,7 +238,7 @@ export function AddPlant() {
           </label>
 
           <label className={styles.label}>
-            Photo <span className={styles.hint}>— paste a screenshot (Ctrl+V) or enter a URL</span>
+            Photo <span className={styles.hint}>— take/upload a photo, paste (Ctrl+V), or enter a URL</span>
             <div
               className={`${styles.pasteZone} ${uploading ? styles.pasteZoneUploading : ''}`}
               onPaste={handlePaste}
@@ -238,16 +247,32 @@ export function AddPlant() {
             >
               {form.photo_url
                 ? <img src={form.photo_url} alt="Plant preview" className={styles.photoPreview} />
-                : <span className={styles.pasteHint}>{uploading ? 'Uploading…' : 'Ctrl+V to paste a photo'}</span>
+                : <span className={styles.pasteHint}>{uploading ? 'Uploading…' : 'Ctrl+V to paste (desktop)'}</span>
               }
             </div>
             {uploadError && <p className={styles.lookupError}>Upload failed: {uploadError}</p>}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className={styles.fileInputHidden}
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              className={styles.uploadBtn}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading…' : '📷 Take or upload photo'}
+            </button>
             <input
               className={styles.input}
               type="url"
               value={form.photo_url}
               onChange={(e) => set('photo_url', e.target.value)}
-              placeholder="https://… (or paste above)"
+              placeholder="https://… (or use options above)"
             />
           </label>
 
