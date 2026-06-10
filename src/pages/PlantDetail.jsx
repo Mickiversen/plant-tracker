@@ -68,6 +68,7 @@ export function PlantDetail() {
         }
         <div className={styles.heroInfo}>
           <h1 className={styles.name}>{plant.name}</h1>
+          {plant.common_name_da && <p className={styles.commonName}>{plant.common_name_da}</p>}
           {plant.species && <p className={styles.species}>{plant.species}</p>}
 
           <div className={styles.tags}>

@@ -27,6 +27,7 @@ export function PlantCard({ plant }) {
       <div className={styles.body}>
         <div className={styles.header}>
           <h2 className={styles.name}>{plant.name}</h2>
+          {plant.common_name_da && <p className={styles.commonName}>{plant.common_name_da}</p>}
           {plant.species && <p className={styles.species}>{plant.species}</p>}
         </div>
 

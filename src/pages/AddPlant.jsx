@@ -59,6 +59,7 @@ export function AddPlant() {
   const [form, setForm] = useState({
     name: '',
     species: '',
+    common_name_da: '',
     location: '',
     photo_url: '',
     notes: '',
@@ -71,6 +72,7 @@ export function AddPlant() {
     setForm({
       name: existing.name ?? '',
       species: existing.species ?? '',
+      common_name_da: existing.common_name_da ?? '',
       location: existing.location ?? '',
       photo_url: existing.photo_url ?? '',
       notes: existing.notes ?? '',
@@ -93,6 +95,7 @@ export function AddPlant() {
     setForm((f) => ({
       ...f,
       species: suggestion.species ?? f.species,
+      common_name_da: suggestion.common_name_da ?? f.common_name_da,
       photo_url: f.photo_url || suggestion.photo_url || f.photo_url,
       notes: suggestion.notes ?? f.notes,
       water_every_days: suggestion.water_every_days ? String(suggestion.water_every_days) : f.water_every_days,
@@ -126,6 +129,7 @@ export function AddPlant() {
     const plantPayload = {
       name: form.name.trim(),
       species: form.species.trim() || null,
+      common_name_da: form.common_name_da.trim() || null,
       location: form.location.trim() || null,
       photo_url: form.photo_url.trim() || null,
       notes: form.notes.trim() || null,
@@ -224,6 +228,16 @@ export function AddPlant() {
               value={form.species}
               onChange={(e) => set('species', e.target.value)}
               placeholder="e.g. Monstera deliciosa"
+            />
+          </label>
+
+          <label className={styles.label}>
+            Dansk navn <span className={styles.hint}>— auto-filled from lookup</span>
+            <input
+              className={styles.input}
+              value={form.common_name_da}
+              onChange={(e) => set('common_name_da', e.target.value)}
+              placeholder="e.g. Vinduesblad"
             />
           </label>
 
