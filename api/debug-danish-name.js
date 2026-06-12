@@ -31,6 +31,30 @@ async function daExactTitle(title) {
   return { result: missing ? null : (page?.title || null), missing, redirects: r.json?.query?.redirects }
 }
 
+async function gbifDanishName(scientificName) {
+  if (!scientificName) return { result: null, raw: 'no name' }
+  try {
+    const matchRes = await fetch(
+      `https://api.gbif.org/v1/species?name=${encodeURIComponent(scientificName)}&limit=1`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!matchRes.ok) return { result: null, raw: { status: matchRes.status } }
+    const matchJson = await matchRes.json()
+    const key = matchJson?.results?.[0]?.key
+    if (!key) return { result: null, raw: 'no match key', topResult: matchJson?.results?.[0] }
+    const vernRes = await fetch(
+      `https://api.gbif.org/v1/species/${key}/vernacularNames?language=dan&limit=10`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!vernRes.ok) return { result: null, raw: { status: vernRes.status } }
+    const vernJson = await vernRes.json()
+    const hit = vernJson?.results?.find((r) => r.language === 'dan')
+    return { result: hit?.vernacularName || null, allDanish: vernJson?.results?.filter((r) => r.language === 'dan'), key }
+  } catch (err) {
+    return { result: null, error: err.message }
+  }
+}
+
 async function searchDaWiki(query) {
   if (!query) return { result: null, raw: 'no query' }
   const url = `https://da.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`"${query}"`)}&srlimit=3&format=json&origin=*`
@@ -57,8 +81,10 @@ export default async function handler(req, res) {
     '2_langlinkDa(name)': await langlinkDa(name),
     '3_daExactTitle(species)': await daExactTitle(species),
     '4_daExactTitle(name)': await daExactTitle(name),
-    '5_searchDaWiki(species)': await searchDaWiki(species),
-    '6_searchDaWiki(name)': await searchDaWiki(name),
+    '5_gbifDanishName(species)': await gbifDanishName(species),
+    '6_gbifDanishName(name)': await gbifDanishName(name),
+    '7_searchDaWiki(species)': await searchDaWiki(species),
+    '8_searchDaWiki(name)': await searchDaWiki(name),
   }
 
   const firstHit =
@@ -66,8 +92,10 @@ export default async function handler(req, res) {
     steps['2_langlinkDa(name)'].result ||
     steps['3_daExactTitle(species)'].result ||
     steps['4_daExactTitle(name)'].result ||
-    steps['5_searchDaWiki(species)'].result ||
-    steps['6_searchDaWiki(name)'].result ||
+    steps['5_gbifDanishName(species)'].result ||
+    steps['6_gbifDanishName(name)'].result ||
+    steps['7_searchDaWiki(species)'].result ||
+    steps['8_searchDaWiki(name)'].result ||
     null
 
   return res.json({ name, species, firstHit, fellBackToClaude: !firstHit, steps })

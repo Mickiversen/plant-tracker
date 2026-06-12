@@ -53,6 +53,32 @@ async function daExactTitle(title) {
   }
 }
 
+// GBIF vernacular names — global biodiversity database with Danish names from
+// herbaria and garden collections. Covers many plants absent from da.wikipedia.
+async function gbifDanishName(scientificName) {
+  if (!scientificName) return null
+  try {
+    const matchRes = await fetch(
+      `https://api.gbif.org/v1/species?name=${encodeURIComponent(scientificName)}&limit=1`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!matchRes.ok) return null
+    const matchJson = await matchRes.json()
+    const key = matchJson?.results?.[0]?.key
+    if (!key) return null
+    const vernRes = await fetch(
+      `https://api.gbif.org/v1/species/${key}/vernacularNames?language=dan&limit=10`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!vernRes.ok) return null
+    const vernJson = await vernRes.json()
+    const hit = vernJson?.results?.find((r) => r.language === 'dan')
+    return hit?.vernacularName || null
+  } catch {
+    return null
+  }
+}
+
 // Fuzzy search fallback — only trusted when the matched article actually
 // mentions the queried name, otherwise the top hit can be an unrelated plant.
 async function searchDaWiki(query) {
@@ -79,6 +105,8 @@ async function fetchDanishWikipediaName(species, name) {
     (await langlinkDa(name)) ||
     (await daExactTitle(species)) ||
     (await daExactTitle(name)) ||
+    (await gbifDanishName(species)) ||
+    (await gbifDanishName(name)) ||
     (await searchDaWiki(species)) ||
     (await searchDaWiki(name)) ||
     null
