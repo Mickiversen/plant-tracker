@@ -132,7 +132,7 @@ async function getEnglishCommonNameFromWiki(title) {
     ]
     for (const re of patterns) {
       const m = extract.match(re)
-      if (m) return m[1].trim().toLowerCase()
+      if (m) return m[1].trim().toLowerCase().split(/\s+or\s+/)[0].trim()
     }
     return null
   } catch {
