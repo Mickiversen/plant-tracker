@@ -70,6 +70,42 @@ async function searchDaWiki(query) {
   return { result: validated, topHits: hits.map((h) => h.title) }
 }
 
+async function getEnglishCommonNameFromWiki(title) {
+  if (!title) return { result: null, raw: 'no title' }
+  try {
+    const rRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&format=json&origin=*`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!rRes.ok) return { result: null, raw: { status: rRes.status } }
+    const rJson = await rRes.json()
+    const page = Object.values(rJson?.query?.pages ?? {})[0]
+    if (!page || page.missing !== undefined) return { result: null, raw: 'missing' }
+    const resolved = page.title || title
+
+    const sumRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(resolved)}`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!sumRes.ok) return { result: null, raw: { status: sumRes.status } }
+    const json = await sumRes.json()
+    const extract = json?.extract || ''
+    const patterns = [
+      /(?:also|commonly|informally|colloquially)\s+known\s+as\s+(?:the\s+)?([^,\.;(]+)/i,
+      /known\s+(?:informally|colloquially|commonly|also)\s+as\s+(?:the\s+)?([^,\.;(]+)/i,
+      /known\s+as\s+(?:the\s+)?([^,\.;(]+)/i,
+      /(?:also|commonly|informally)\s+called\s+(?:the\s+)?([^,\.;(]+)/i,
+    ]
+    for (const re of patterns) {
+      const m = extract.match(re)
+      if (m) return { result: m[1].trim().toLowerCase(), resolvedTitle: resolved, matchedPattern: re.toString(), extract: extract.slice(0, 300) }
+    }
+    return { result: null, resolvedTitle: resolved, extract: extract.slice(0, 300) }
+  } catch (err) {
+    return { result: null, error: err.message }
+  }
+}
+
 export default async function handler(req, res) {
   const name = req.query?.name?.trim()
   const species = req.query?.species?.trim() || name
@@ -85,6 +121,8 @@ export default async function handler(req, res) {
     '6_gbifDanishName(name)': await gbifDanishName(name),
     '7_searchDaWiki(species)': await searchDaWiki(species),
     '8_searchDaWiki(name)': await searchDaWiki(name),
+    '9_enCommonName(species)': await getEnglishCommonNameFromWiki(species),
+    '9b_enCommonName(name)': await getEnglishCommonNameFromWiki(name),
   }
 
   const firstHit =
@@ -98,5 +136,5 @@ export default async function handler(req, res) {
     steps['8_searchDaWiki(name)'].result ||
     null
 
-  return res.json({ name, species, firstHit, fellBackToClaude: !firstHit, steps })
+  return res.json({ name, species, firstHit, fellBackToClaude: !firstHit, enCommonNameExtracted: steps['9_enCommonName(species)'].result || steps['9b_enCommonName(name)'].result, steps })
 }

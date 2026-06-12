@@ -122,9 +122,19 @@ async function getEnglishCommonNameFromWiki(title) {
     if (!sumRes.ok) return null
     const json = await sumRes.json()
     const extract = json?.extract || ''
-    // Match "also known as (the) X" or "commonly known as (the) X" or "also called (the) X"
-    const m = extract.match(/(?:also|commonly)\s+(?:known|called)\s+as\s+(?:the\s+)?([^,\.;(]+)/i)
-    return m ? m[1].trim().toLowerCase() : null
+    // Try progressively broader patterns until one matches.
+    // Stop at the first comma to get only the primary common name.
+    const patterns = [
+      /(?:also|commonly|informally|colloquially)\s+known\s+as\s+(?:the\s+)?([^,\.;(]+)/i,
+      /known\s+(?:informally|colloquially|commonly|also)\s+as\s+(?:the\s+)?([^,\.;(]+)/i,
+      /known\s+as\s+(?:the\s+)?([^,\.;(]+)/i,
+      /(?:also|commonly|informally)\s+called\s+(?:the\s+)?([^,\.;(]+)/i,
+    ]
+    for (const re of patterns) {
+      const m = extract.match(re)
+      if (m) return m[1].trim().toLowerCase()
+    }
+    return null
   } catch {
     return null
   }
