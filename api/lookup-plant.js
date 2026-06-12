@@ -231,7 +231,9 @@ Plant name: "${name.replace(/"/g, '')}"`
             }]
           })
           const translated = translateMsg.content?.[0]?.text?.trim()
-          if (translated) data.common_name_da = translated
+          const isValid = translated && translated.length <= 60 &&
+            !/\b(I (don't|cannot|can't|don't have|am not|won't)|cannot provide|reliable|verify|uncertain|apologize)\b/i.test(translated)
+          if (isValid) data.common_name_da = translated
         }
       }
 

@@ -114,6 +114,11 @@ async function getEnglishCommonNameFromWiki(title) {
   }
 }
 
+function isValidName(text) {
+  if (!text || text.length > 60) return false
+  return !/\b(I (don't|cannot|can't|don't have|am not|won't)|cannot provide|reliable|verify|uncertain|apologize)\b/i.test(text)
+}
+
 async function fetchDanishWikipediaName(species, name) {
   return (
     (await langlinkDa(species)) ||
@@ -170,26 +175,25 @@ export default async function handler(req, res) {
               content: `Translate the plant name "${enCommonName.replace(/"/g, '')}" to Danish exactly as Danish garden centres (Plantorama, Bauhaus) use it. Direct literal translation only — "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante", "peace lily" → "Fredslilje". Reply with ONLY the Danish name, nothing else.`
             }]
           })
-          common_name_da = message.content?.[0]?.text?.trim() || null
+          const raw = message.content?.[0]?.text?.trim() || null
+          common_name_da = isValidName(raw) ? raw : null
         }
       }
 
-      // Last resort: ask Claude to infer both the English name and translate it
+      // Last resort: ask Claude to infer both the English name and translate it.
+      // Prompt is phrased as a command with no escape hatch so Claude must commit to an answer.
       if (!common_name_da) {
         source = 'claude'
         const message = await client.messages.create({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 64,
+          max_tokens: 32,
           messages: [{
             role: 'user',
-            content: `For the plant "${searchName.replace(/"/g, '')}":
-Step 1 – What is its most widely used English common name or trade name? (e.g. "fishbone cactus", "spider plant", "peace lily")
-Step 2 – Translate that English name to Danish exactly as Danish garden centres (Plantorama, Bauhaus) do. Direct, literal translations: "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante", "peace lily" → "Fredslilje".
-
-Reply with ONLY the final Danish name. Never invent a name — always derive it from the English trade name.`
+            content: `Give the Danish common name for "${searchName.replace(/"/g, '')}" as used in Danish garden centres. Translate the English trade name literally: "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante". Always give your best guess — one Danish name only, no explanations.`
           }],
         })
-        common_name_da = message.content?.[0]?.text?.trim() || null
+        const raw = message.content?.[0]?.text?.trim() || null
+        common_name_da = isValidName(raw) ? raw : null
       }
 
       if (common_name_da) {
