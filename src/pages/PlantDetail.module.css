@@ -92,17 +92,19 @@
 
 .name {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--heading);
   color: var(--text-h);
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .commonName {
-  font-size: 17px;
-  color: var(--accent);
+  font-size: 16px;
+  color: var(--accent-gold);
   font-weight: 500;
   margin: 0;
+  letter-spacing: 0.3px;
 }
 
 .species {
@@ -127,8 +129,8 @@
 }
 
 .overdueTag {
-  background: rgba(224, 92, 42, 0.18);
-  color: #f4894a;
+  background: rgba(160, 82, 45, 0.22);
+  color: #d4825a;
 }
 
 .details {
