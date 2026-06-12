@@ -98,6 +98,38 @@ async function searchDaWiki(query) {
   }
 }
 
+// Extract the English common name from the Wikipedia article intro
+// (e.g. "Disocactus anguliger, also known as the fishbone cactus, ...")
+// Returns the first listed common name in lower-case, or null.
+async function getEnglishCommonNameFromWiki(title) {
+  if (!title) return null
+  try {
+    // Resolve redirects to get the canonical article title
+    const rRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&format=json&origin=*`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!rRes.ok) return null
+    const rJson = await rRes.json()
+    const page = Object.values(rJson?.query?.pages ?? {})[0]
+    if (!page || page.missing !== undefined) return null
+    const resolved = page.title || title
+
+    const sumRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(resolved)}`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!sumRes.ok) return null
+    const json = await sumRes.json()
+    const extract = json?.extract || ''
+    // Match "also known as (the) X" or "commonly known as (the) X" or "also called (the) X"
+    const m = extract.match(/(?:also|commonly)\s+(?:known|called)\s+as\s+(?:the\s+)?([^,\.;(]+)/i)
+    return m ? m[1].trim().toLowerCase() : null
+  } catch {
+    return null
+  }
+}
+
 // Resolve the best Danish name, most precise source first.
 async function fetchDanishWikipediaName(species, name) {
   return (
@@ -172,7 +204,26 @@ Plant name: "${name.replace(/"/g, '')}"`
       // Override common_name_da with the real Danish Wikipedia title when available —
       // far more reliable than the AI's training data for less common plants
       const wikiDaName = await fetchDanishWikipediaName(data.species, name)
-      if (wikiDaName) data.common_name_da = wikiDaName
+      if (wikiDaName) {
+        data.common_name_da = wikiDaName
+      } else {
+        // No structured Danish source found — extract the English common name from the
+        // Wikipedia intro ("also known as the fishbone cactus") and translate only that.
+        // Translating a known English trade name is reliable; asking Claude to invent one is not.
+        const enCommonName = await getEnglishCommonNameFromWiki(data.species || name)
+        if (enCommonName) {
+          const translateMsg = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 32,
+            messages: [{
+              role: 'user',
+              content: `Translate the plant name "${enCommonName.replace(/"/g, '')}" to Danish exactly as Danish garden centres (Plantorama, Bauhaus) use it. Direct literal translation only — "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante", "peace lily" → "Fredslilje". Reply with ONLY the Danish name, nothing else.`
+            }]
+          })
+          const translated = translateMsg.content?.[0]?.text?.trim()
+          if (translated) data.common_name_da = translated
+        }
+      }
 
       // Attach photo
       data.photo_url =

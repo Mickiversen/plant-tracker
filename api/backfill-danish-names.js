@@ -78,6 +78,33 @@ async function searchDaWiki(query) {
   }
 }
 
+async function getEnglishCommonNameFromWiki(title) {
+  if (!title) return null
+  try {
+    const rRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&format=json&origin=*`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!rRes.ok) return null
+    const rJson = await rRes.json()
+    const page = Object.values(rJson?.query?.pages ?? {})[0]
+    if (!page || page.missing !== undefined) return null
+    const resolved = page.title || title
+
+    const sumRes = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(resolved)}`,
+      { headers: { accept: 'application/json' } }
+    )
+    if (!sumRes.ok) return null
+    const json = await sumRes.json()
+    const extract = json?.extract || ''
+    const m = extract.match(/(?:also|commonly)\s+(?:known|called)\s+as\s+(?:the\s+)?([^,\.;(]+)/i)
+    return m ? m[1].trim().toLowerCase() : null
+  } catch {
+    return null
+  }
+}
+
 async function fetchDanishWikipediaName(species, name) {
   return (
     (await langlinkDa(species)) ||
@@ -119,7 +146,26 @@ export default async function handler(req, res) {
       let source = 'wikipedia'
       let common_name_da = await fetchDanishWikipediaName(plant.species, plant.name)
 
-      // Fall back to Claude if Wikipedia has no Danish page
+      // Fall back: extract the English common name from Wikipedia intro, then
+      // translate only that specific name. Far more reliable than asking Claude
+      // to both recall and translate from training data.
+      if (!common_name_da) {
+        source = 'wiki-translate'
+        const enCommonName = await getEnglishCommonNameFromWiki(plant.species || plant.name)
+        if (enCommonName) {
+          const message = await client.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 32,
+            messages: [{
+              role: 'user',
+              content: `Translate the plant name "${enCommonName.replace(/"/g, '')}" to Danish exactly as Danish garden centres (Plantorama, Bauhaus) use it. Direct literal translation only — "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante", "peace lily" → "Fredslilje". Reply with ONLY the Danish name, nothing else.`
+            }]
+          })
+          common_name_da = message.content?.[0]?.text?.trim() || null
+        }
+      }
+
+      // Last resort: ask Claude to infer both the English name and translate it
       if (!common_name_da) {
         source = 'claude'
         const message = await client.messages.create({
@@ -129,7 +175,7 @@ export default async function handler(req, res) {
             role: 'user',
             content: `For the plant "${searchName.replace(/"/g, '')}":
 Step 1 – What is its most widely used English common name or trade name? (e.g. "fishbone cactus", "spider plant", "peace lily")
-Step 2 – Translate that English name to Danish exactly as Danish garden centres (Plantorama, Bauhaus) do. They do direct, literal translations: "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante", "peace lily" → "Fredslilje".
+Step 2 – Translate that English name to Danish exactly as Danish garden centres (Plantorama, Bauhaus) do. Direct, literal translations: "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante", "peace lily" → "Fredslilje".
 
 Reply with ONLY the final Danish name. Never invent a name — always derive it from the English trade name.`
           }],
