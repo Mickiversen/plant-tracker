@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   const prompt = `You are a plant care expert. Given a plant name, return care data as a JSON object.
 
 Fields to return (always provide a best-estimate value for every field — only use null if truly not applicable):
-- common_name_da: the Danish name exactly as it appears on the label in Danish garden centres (Plantorama, Bauhaus havecentre, etc.). Use the name a Danish customer would read on the plant tag, not a literal translation. E.g. "Monstera", "Fredslilje", "Elefantøre". Always provide this.
+- common_name_da: the Danish name as it would appear on the label in Danish garden centres (Plantorama, Bauhaus havecentre, etc.). If you are confident of that name, use it. Otherwise fall back to the name on the Danish Wikipedia page for the plant, or the official name from Dansk Botanisk Forening. Always provide your best answer — never refuse or return null for this field.
 - species: scientific name string
 - water_every_days: integer (how often to water in days)
 - light_level: one of "low", "medium", "high", "direct"

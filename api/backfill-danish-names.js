@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         max_tokens: 64,
         messages: [{
           role: 'user',
-          content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}" exactly as it appears on the label in Danish garden centres (Plantorama, Bauhaus havecentre, etc.)? Use the name a Danish customer would read on the plant tag — not a literal translation. Reply with ONLY the name, nothing else.`
+          content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}"? Use the name as it appears in Danish garden centres (Plantorama, Bauhaus havecentre) if you know it. If not, use the name from the Danish Wikipedia page or the official name from Dansk Botanisk Forening. Reply with ONLY the name — never refuse or say you don't know, always give your best answer.`
         }],
       })
       const common_name_da = message.content?.[0]?.text?.trim() || null
