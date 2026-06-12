@@ -86,6 +86,10 @@
   border-color: var(--accent);
 }
 
+.input[type="date"] {
+  color-scheme: dark;
+}
+
 .error {
   color: #ef4444;
   font-size: 14px;

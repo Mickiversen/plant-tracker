@@ -5,7 +5,18 @@ import { useUpsertCareNeeds } from '../hooks/useCareNeeds'
 import { usePlant } from '../hooks/usePlants'
 import { usePlantLookup } from '../hooks/usePlantLookup'
 import { useUploadPhoto } from '../hooks/useUploadPhoto'
+import { supabase } from '../lib/supabase'
 import styles from './AddPlant.module.css'
+
+function toISODate(date) {
+  if (!date) return null
+  return new Date(date).toISOString()
+}
+
+function isoToDateInput(iso) {
+  if (!iso) return ''
+  return iso.slice(0, 10)
+}
 
 const LIGHT_OPTIONS = ['low', 'medium', 'high', 'direct']
 
@@ -63,6 +74,9 @@ export function AddPlant() {
     location: '',
     photo_url: '',
     notes: '',
+    last_watered_date: '',
+    last_fertilized_date: '',
+    last_repotted_date: '',
     ...DEFAULTS,
   })
 
@@ -87,6 +101,9 @@ export function AddPlant() {
       temp_min: String(existing.temp_min ?? ''),
       temp_max: String(existing.temp_max ?? ''),
       repot_every_days: String(existing.repot_every_days ?? ''),
+      last_watered_date: isoToDateInput(existing.last_watered_at),
+      last_fertilized_date: isoToDateInput(existing.last_fertilized_at),
+      last_repotted_date: isoToDateInput(existing.last_repotted_at),
     })
   }
 
@@ -157,6 +174,24 @@ export function AddPlant() {
       tempMax: form.temp_max ? parseInt(form.temp_max, 10) : null,
       repotEveryDays: form.repot_every_days ? parseInt(form.repot_every_days, 10) : null,
     })
+
+    // Insert backdated care log entries for any last-action dates provided.
+    // In edit mode, only insert if the date changed from what was already stored.
+    const logEntries = [
+      { action: 'watered',    date: form.last_watered_date,    existing: isoToDateInput(existing?.last_watered_at) },
+      { action: 'fertilized', date: form.last_fertilized_date, existing: isoToDateInput(existing?.last_fertilized_at) },
+      { action: 'repotted',   date: form.last_repotted_date,   existing: isoToDateInput(existing?.last_repotted_at) },
+    ]
+    for (const entry of logEntries) {
+      if (entry.date && entry.date !== entry.existing) {
+        await supabase.from('care_log').insert({
+          plant_id: plantId,
+          action: entry.action,
+          logged_at: toISODate(entry.date),
+          notes: 'Set when adding plant',
+        })
+      }
+    }
 
     navigate(isEdit ? `/plants/${plantId}` : '/')
   }
@@ -305,16 +340,28 @@ export function AddPlant() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Care needs</h2>
 
-          <label className={styles.label}>
-            Water every (days)
-            <input
-              className={styles.input}
-              type="number"
-              min="1"
-              value={form.water_every_days}
-              onChange={(e) => set('water_every_days', e.target.value)}
-            />
-          </label>
+          <div className={styles.row}>
+            <label className={styles.label}>
+              Water every (days)
+              <input
+                className={styles.input}
+                type="number"
+                min="1"
+                value={form.water_every_days}
+                onChange={(e) => set('water_every_days', e.target.value)}
+              />
+            </label>
+            <label className={styles.label}>
+              Last watered <span className={styles.hint}>— leave blank if today</span>
+              <input
+                className={styles.input}
+                type="date"
+                value={form.last_watered_date}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => set('last_watered_date', e.target.value)}
+              />
+            </label>
+          </div>
 
           <label className={styles.label}>
             Light level
@@ -359,17 +406,29 @@ export function AddPlant() {
             />
           </label>
 
-          <label className={styles.label}>
-            Fertilize every (days)
-            <input
-              className={styles.input}
-              type="number"
-              min="1"
-              value={form.fertilize_every_days}
-              onChange={(e) => set('fertilize_every_days', e.target.value)}
-              placeholder="Optional"
-            />
-          </label>
+          <div className={styles.row}>
+            <label className={styles.label}>
+              Fertilize every (days)
+              <input
+                className={styles.input}
+                type="number"
+                min="1"
+                value={form.fertilize_every_days}
+                onChange={(e) => set('fertilize_every_days', e.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+            <label className={styles.label}>
+              Last fertilized
+              <input
+                className={styles.input}
+                type="date"
+                value={form.last_fertilized_date}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => set('last_fertilized_date', e.target.value)}
+              />
+            </label>
+          </div>
 
           <div className={styles.row}>
             <label className={styles.label}>
@@ -421,17 +480,29 @@ export function AddPlant() {
             </label>
           </div>
 
-          <label className={styles.label}>
-            Repot every (days)
-            <input
-              className={styles.input}
-              type="number"
-              min="1"
-              value={form.repot_every_days}
-              onChange={(e) => set('repot_every_days', e.target.value)}
-              placeholder="e.g. 548 (~18 months)"
-            />
-          </label>
+          <div className={styles.row}>
+            <label className={styles.label}>
+              Repot every (days)
+              <input
+                className={styles.input}
+                type="number"
+                min="1"
+                value={form.repot_every_days}
+                onChange={(e) => set('repot_every_days', e.target.value)}
+                placeholder="e.g. 548 (~18 months)"
+              />
+            </label>
+            <label className={styles.label}>
+              Last repotted
+              <input
+                className={styles.input}
+                type="date"
+                value={form.last_repotted_date}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => set('last_repotted_date', e.target.value)}
+              />
+            </label>
+          </div>
         </section>
 
         {saveError && <p className={styles.error}>{saveError.message}</p>}
