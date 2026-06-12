@@ -16,6 +16,24 @@ async function fetchPlantPhoto(title) {
   }
 }
 
+// Fetch the Danish Wikipedia page title for a plant — this is almost always
+// the recognised Danish common name (e.g. "Fiskebenskaktus" for Epiphyllum anguliger)
+async function fetchDanishWikipediaName(title) {
+  if (!title) return null
+  try {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
+    const res = await fetch(url, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const json = await res.json()
+    const pages = json?.query?.pages
+    if (!pages) return null
+    const page = Object.values(pages)[0]
+    return page?.langlinks?.[0]?.['*'] || null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req, res) {
   const name = req.query?.name?.trim()
 
@@ -33,7 +51,7 @@ export default async function handler(req, res) {
   const prompt = `You are a plant care expert. Given a plant name, return care data as a JSON object.
 
 Fields to return (always provide a best-estimate value for every field — only use null if truly not applicable):
-- common_name_da: the Danish name as it would appear on the label in Danish garden centres (Plantorama, Bauhaus havecentre, etc.). If you are confident of that name, use it. Otherwise fall back to the name on the Danish Wikipedia page for the plant, or the official name from Dansk Botanisk Forening. Always provide your best answer — never refuse or return null for this field.
+- common_name_da: the Danish name as it would appear on the label in Danish garden centres (Plantorama, Bauhaus havecentre, etc.). If you are confident of that name, use it. Otherwise use the name from the Danish Wikipedia page for the plant, or the official name from Dansk Botanisk Forening. Always provide your best answer — never refuse or return null for this field.
 - species: scientific name string
 - water_every_days: integer (how often to water in days)
 - light_level: one of "low", "medium", "high", "direct"
@@ -71,8 +89,15 @@ Plant name: "${name.replace(/"/g, '')}"`
       return res.json({ data: null, error: 'parse_failed', raw: text })
     }
 
-    // Attach a photo — try the scientific species first, fall back to the typed name
     if (data) {
+      // Override common_name_da with the Danish Wikipedia title when available —
+      // it's more reliable than the AI's training data for less common plants
+      const wikiDaName =
+        (await fetchDanishWikipediaName(data.species)) ||
+        (await fetchDanishWikipediaName(name))
+      if (wikiDaName) data.common_name_da = wikiDaName
+
+      // Attach photo
       data.photo_url =
         (await fetchPlantPhoto(data.species)) || (await fetchPlantPhoto(name)) || null
     }

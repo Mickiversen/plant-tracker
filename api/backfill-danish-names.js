@@ -1,6 +1,22 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
+async function fetchDanishWikipediaName(title) {
+  if (!title) return null
+  try {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
+    const res = await fetch(url, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const json = await res.json()
+    const pages = json?.query?.pages
+    if (!pages) return null
+    const page = Object.values(pages)[0]
+    return page?.langlinks?.[0]?.['*'] || null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -15,28 +31,36 @@ export default async function handler(req, res) {
   const { data: plants, error } = await supabase
     .from('plants')
     .select('id, name, species')
-    .select()
 
   if (error) return res.status(500).json({ error: error.message })
-  if (!plants?.length) return res.json({ updated: 0, message: 'All plants already have a Danish name.' })
+  if (!plants?.length) return res.json({ updated: 0, message: 'No plants found.' })
 
   const results = []
 
   for (const plant of plants) {
     const searchName = plant.species || plant.name
     try {
-      const message = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 64,
-        messages: [{
-          role: 'user',
-          content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}"? Use the name as it appears in Danish garden centres (Plantorama, Bauhaus havecentre) if you know it. If not, use the name from the Danish Wikipedia page or the official name from Dansk Botanisk Forening. Reply with ONLY the name — never refuse or say you don't know, always give your best answer.`
-        }],
-      })
-      const common_name_da = message.content?.[0]?.text?.trim() || null
+      // Try Wikipedia first — its Danish page title is the recognised common name
+      let common_name_da =
+        (await fetchDanishWikipediaName(plant.species)) ||
+        (await fetchDanishWikipediaName(plant.name))
+
+      // Fall back to Claude if Wikipedia has no Danish page
+      if (!common_name_da) {
+        const message = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 64,
+          messages: [{
+            role: 'user',
+            content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}"? Use the name as it appears in Danish garden centres (Plantorama, Bauhaus havecentre) if you know it. If not, use the name from the Danish Wikipedia page or Dansk Botanisk Forening. Reply with ONLY the name — never refuse, always give your best answer.`
+          }],
+        })
+        common_name_da = message.content?.[0]?.text?.trim() || null
+      }
+
       if (common_name_da) {
         await supabase.from('plants').update({ common_name_da }).eq('id', plant.id)
-        results.push({ id: plant.id, name: plant.name, common_name_da })
+        results.push({ id: plant.id, name: plant.name, common_name_da, source: common_name_da ? 'wikipedia' : 'claude' })
       }
     } catch (err) {
       results.push({ id: plant.id, name: plant.name, error: err.message })
