@@ -1,20 +1,41 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
-async function fetchDanishWikipediaName(title) {
+async function langlinkDa(title) {
   if (!title) return null
   try {
     const url = `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
     const res = await fetch(url, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const json = await res.json()
-    const pages = json?.query?.pages
-    if (!pages) return null
-    const page = Object.values(pages)[0]
+    const page = Object.values(json?.query?.pages ?? {})[0]
     return page?.langlinks?.[0]?.['*'] || null
   } catch {
     return null
   }
+}
+
+async function searchDaWiki(query) {
+  if (!query) return null
+  try {
+    const url = `https://da.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=1&format=json&origin=*`
+    const res = await fetch(url, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const json = await res.json()
+    return json?.query?.search?.[0]?.title || null
+  } catch {
+    return null
+  }
+}
+
+async function fetchDanishWikipediaName(species, name) {
+  return (
+    (await langlinkDa(species)) ||
+    (await langlinkDa(name)) ||
+    (await searchDaWiki(species)) ||
+    (await searchDaWiki(name)) ||
+    null
+  )
 }
 
 export default async function handler(req, res) {
@@ -42,9 +63,7 @@ export default async function handler(req, res) {
     try {
       // Try Wikipedia first — its Danish page title is the recognised common name
       let source = 'wikipedia'
-      let common_name_da =
-        (await fetchDanishWikipediaName(plant.species)) ||
-        (await fetchDanishWikipediaName(plant.name))
+      let common_name_da = await fetchDanishWikipediaName(plant.species, plant.name)
 
       // Fall back to Claude if Wikipedia has no Danish page
       if (!common_name_da) {

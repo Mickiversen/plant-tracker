@@ -16,22 +16,47 @@ async function fetchPlantPhoto(title) {
   }
 }
 
-// Fetch the Danish Wikipedia page title for a plant — this is almost always
-// the recognised Danish common name (e.g. "Fiskebenskaktus" for Epiphyllum anguliger)
-async function fetchDanishWikipediaName(title) {
+// Look up the Danish-language Wikipedia link from an English page (resolving redirects)
+async function langlinkDa(title) {
   if (!title) return null
   try {
     const url = `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
     const res = await fetch(url, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const json = await res.json()
-    const pages = json?.query?.pages
-    if (!pages) return null
-    const page = Object.values(pages)[0]
+    const page = Object.values(json?.query?.pages ?? {})[0]
     return page?.langlinks?.[0]?.['*'] || null
   } catch {
     return null
   }
+}
+
+// Search the Danish Wikipedia directly for a scientific name — its article title
+// is the recognised Danish common name. Catches plants whose English page has no
+// Danish langlink (e.g. Disocactus/Epiphyllum anguliger → "Fiskebenskaktus").
+async function searchDaWiki(query) {
+  if (!query) return null
+  try {
+    const url = `https://da.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=1&format=json&origin=*`
+    const res = await fetch(url, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const json = await res.json()
+    return json?.query?.search?.[0]?.title || null
+  } catch {
+    return null
+  }
+}
+
+// Resolve the best Danish name: English langlink first, then a direct Danish
+// Wikipedia search, trying the scientific name before the user's typed name.
+async function fetchDanishWikipediaName(species, name) {
+  return (
+    (await langlinkDa(species)) ||
+    (await langlinkDa(name)) ||
+    (await searchDaWiki(species)) ||
+    (await searchDaWiki(name)) ||
+    null
+  )
 }
 
 export default async function handler(req, res) {
@@ -90,11 +115,9 @@ Plant name: "${name.replace(/"/g, '')}"`
     }
 
     if (data) {
-      // Override common_name_da with the Danish Wikipedia title when available —
-      // it's more reliable than the AI's training data for less common plants
-      const wikiDaName =
-        (await fetchDanishWikipediaName(data.species)) ||
-        (await fetchDanishWikipediaName(name))
+      // Override common_name_da with the real Danish Wikipedia title when available —
+      // far more reliable than the AI's training data for less common plants
+      const wikiDaName = await fetchDanishWikipediaName(data.species, name)
       if (wikiDaName) data.common_name_da = wikiDaName
 
       // Attach photo
