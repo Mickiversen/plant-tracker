@@ -15,14 +15,38 @@ async function langlinkDa(title) {
   }
 }
 
-async function searchDaWiki(query) {
-  if (!query) return null
+// Exact title lookup on da.wikipedia, following redirects. Danish Wikipedia
+// typically redirects scientific names to the Danish common-name title, so
+// this is precise — it cannot land on an unrelated article.
+async function daExactTitle(title) {
+  if (!title) return null
   try {
-    const url = `https://da.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=1&format=json&origin=*`
+    const url = `https://da.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&format=json&origin=*`
     const res = await fetch(url, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const json = await res.json()
-    return json?.query?.search?.[0]?.title || null
+    const page = Object.values(json?.query?.pages ?? {})[0]
+    if (!page || page.missing !== undefined || page.invalid !== undefined) return null
+    return page.title || null
+  } catch {
+    return null
+  }
+}
+
+// Fuzzy search fallback — only trusted when the matched article actually
+// mentions the queried name, otherwise the top hit can be an unrelated plant.
+async function searchDaWiki(query) {
+  if (!query) return null
+  try {
+    const url = `https://da.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`"${query}"`)}&srlimit=1&format=json&origin=*`
+    const res = await fetch(url, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const json = await res.json()
+    const hit = json?.query?.search?.[0]
+    if (!hit) return null
+    const haystack = `${hit.title} ${hit.snippet ?? ''}`.toLowerCase()
+    if (!haystack.includes(query.toLowerCase())) return null
+    return hit.title
   } catch {
     return null
   }
@@ -32,6 +56,8 @@ async function fetchDanishWikipediaName(species, name) {
   return (
     (await langlinkDa(species)) ||
     (await langlinkDa(name)) ||
+    (await daExactTitle(species)) ||
+    (await daExactTitle(name)) ||
     (await searchDaWiki(species)) ||
     (await searchDaWiki(name)) ||
     null
