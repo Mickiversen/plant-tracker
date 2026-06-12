@@ -99,7 +99,7 @@ export default async function handler(req, res) {
           max_tokens: 64,
           messages: [{
             role: 'user',
-            content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}"? Use the name as it appears in Danish garden centres (Plantorama, Bauhaus havecentre) if you know it. If not, use the name from the Danish Wikipedia page or Dansk Botanisk Forening. Reply with ONLY the name — never refuse, always give your best answer.`
+            content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}"? Priority: 1) the name used in Danish garden centres (Plantorama, Bauhaus havecentre) if you know it, 2) otherwise take the most widely used ENGLISH common/trade name and translate it to Danish the way Danish plant retailers do (e.g. "fishbone cactus" → "Fiskebenskaktus", "spider plant" → "Edderkoppeplante"). Do NOT invent a name from the plant's botanical features. Reply with ONLY the name — never refuse, always give your best answer.`
           }],
         })
         common_name_da = message.content?.[0]?.text?.trim() || null
