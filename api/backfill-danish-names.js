@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 async function fetchDanishWikipediaName(title) {
   if (!title) return null
   try {
-    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
+    const url = `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
     const res = await fetch(url, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const json = await res.json()
@@ -41,12 +41,14 @@ export default async function handler(req, res) {
     const searchName = plant.species || plant.name
     try {
       // Try Wikipedia first — its Danish page title is the recognised common name
+      let source = 'wikipedia'
       let common_name_da =
         (await fetchDanishWikipediaName(plant.species)) ||
         (await fetchDanishWikipediaName(plant.name))
 
       // Fall back to Claude if Wikipedia has no Danish page
       if (!common_name_da) {
+        source = 'claude'
         const message = await client.messages.create({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 64,
@@ -60,7 +62,7 @@ export default async function handler(req, res) {
 
       if (common_name_da) {
         await supabase.from('plants').update({ common_name_da }).eq('id', plant.id)
-        results.push({ id: plant.id, name: plant.name, common_name_da, source: common_name_da ? 'wikipedia' : 'claude' })
+        results.push({ id: plant.id, name: plant.name, common_name_da, source })
       }
     } catch (err) {
       results.push({ id: plant.id, name: plant.name, error: err.message })

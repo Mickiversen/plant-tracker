@@ -21,7 +21,7 @@ async function fetchPlantPhoto(title) {
 async function fetchDanishWikipediaName(title) {
   if (!title) return null
   try {
-    const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
+    const url = `https://en.wikipedia.org/w/api.php?action=query&redirects=1&titles=${encodeURIComponent(title)}&prop=langlinks&lllang=da&format=json&origin=*`
     const res = await fetch(url, { headers: { accept: 'application/json' } })
     if (!res.ok) return null
     const json = await res.json()
