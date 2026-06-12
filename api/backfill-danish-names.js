@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   const { data: plants, error } = await supabase
     .from('plants')
     .select('id, name, species')
-    .is('common_name_da', null)
+    .select()
 
   if (error) return res.status(500).json({ error: error.message })
   if (!plants?.length) return res.json({ updated: 0, message: 'All plants already have a Danish name.' })
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         max_tokens: 64,
         messages: [{
           role: 'user',
-          content: `What is the most common Danish name for the plant "${searchName.replace(/"/g, '')}"? Reply with ONLY the Danish name, nothing else. If uncertain, give your best guess.`
+          content: `What is the Danish name for the plant "${searchName.replace(/"/g, '')}" exactly as it appears on the label in Danish garden centres (Plantorama, Bauhaus havecentre, etc.)? Use the name a Danish customer would read on the plant tag — not a literal translation. Reply with ONLY the name, nothing else.`
         }],
       })
       const common_name_da = message.content?.[0]?.text?.trim() || null
